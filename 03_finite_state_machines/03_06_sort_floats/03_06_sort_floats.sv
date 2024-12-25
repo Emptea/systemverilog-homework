@@ -85,6 +85,51 @@ module sort_three_floats (
     //
     // The FLEN parameter is defined in the "import/preprocessed/cvw/config-shared.vh" file
     // and usually equal to the bit width of the double-precision floating-point number, FP64, 64 bits.
+    logic u0_less_or_equal_u1, u1_less_or_equal_u2, u0_less_or_equal_u2;
+    logic err1, err2, err3;
 
+    f_less_or_equal i_floe0
+    (
+        .a   ( unsorted [0]        ),
+        .b   ( unsorted [1]        ),
+        .res ( u0_less_or_equal_u1 ),
+        .err ( err0                 )
+    );
+
+    f_less_or_equal i_floe1
+    (
+        .a   ( unsorted [1]        ),
+        .b   ( unsorted [2]        ),
+        .res ( u1_less_or_equal_u2 ),
+        .err ( err1                 )
+    );
+
+    f_less_or_equal i_floe2
+    (
+        .a   ( unsorted [0]        ),
+        .b   ( unsorted [2]        ),
+        .res ( u0_less_or_equal_u2 ),
+        .err ( err2                 )
+    );
+    assign err = err0 | err1 | err2;
+
+    always_comb
+        if (u0_less_or_equal_u1 & u1_less_or_equal_u2)
+            sorted = unsorted;
+        else if (u0_less_or_equal_u1 & !u1_less_or_equal_u2 & u0_less_or_equal_u2)
+              {   sorted [0],   sorted [1], sorted[2] }
+            = { unsorted [0], unsorted [2], unsorted[1]};
+        else if (u0_less_or_equal_u1 & !u1_less_or_equal_u2 & !u0_less_or_equal_u2)
+              {   sorted [0],   sorted [1], sorted[2] }
+            = { unsorted [2], unsorted [0], unsorted[1]};
+        else if (!u0_less_or_equal_u1 & u1_less_or_equal_u2 & !u0_less_or_equal_u2)
+              {   sorted [0],   sorted [1], sorted[2] }
+            = { unsorted [1], unsorted [2], unsorted[0]};
+        else if (!u0_less_or_equal_u1 & u1_less_or_equal_u2 & u0_less_or_equal_u2)
+              {   sorted [0],   sorted [1], sorted[2] }
+            = { unsorted [1], unsorted [0], unsorted[2]};
+        else if (!u0_less_or_equal_u1 & !u1_less_or_equal_u2)
+              {   sorted [0],   sorted [1], sorted[2] }
+            = { unsorted [2], unsorted [1], unsorted[0]};
 
 endmodule
