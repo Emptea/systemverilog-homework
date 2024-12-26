@@ -34,7 +34,9 @@ module float_discriminant (
   logic down_valid_b_sq, down_valid_ac, down_valid_four_ac;
   logic busy_b_sq, busy_ac, busy_sub, busy_four_ac;
   logic err_b_sq, err_ac, err_sub, err_four_ac;
-  real four = 4.0;
+
+  localparam [FLEN - 1:0] four = 64'h4010_0000_0000_0000;
+
 
   f_mult i_b_sq (
       .clk(clk),
@@ -65,7 +67,7 @@ module float_discriminant (
       .rst(rst),
       .a(four),
       .b(ac),
-      .up_valid(arg_vld),
+      .up_valid(down_valid_ac),
       .res(four_ac),
       .down_valid(down_valid_four_ac),
       .busy(busy_four_ac),
@@ -77,7 +79,7 @@ module float_discriminant (
       .rst(rst),
       .a(b_sq),
       .b(four_ac),
-      .up_valid(arg_vld),
+      .up_valid(down_valid_four_ac),
       .res(res),
       .down_valid(res_vld),
       .busy(busy_sub),
