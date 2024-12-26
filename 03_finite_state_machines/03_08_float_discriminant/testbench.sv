@@ -76,7 +76,7 @@ module testbench;
         begin
             repeat (TIMEOUT) @ (posedge clk);
             $display ("FAIL %s: timeout!", test_id);
-            $finish;
+            // $finish;
         end
         join_none
 
@@ -153,12 +153,12 @@ module testbench;
             // Uncomment the following line
             // to generate a VCD file and analyze it using GTKwave
 
-            // $dumpvars;
+            $dumpvars;
         `endif
 
         run ();
 
-        $finish;
+        // $finish;
     end
 
     //--------------------------------------------------------------------------
@@ -233,7 +233,7 @@ module testbench;
                     $display ("FAIL %s: unexpected result %s",
                         test_id, `PG_BITS (res) );
 
-                    $finish;
+                    // $finish;
                 end
                 else
                 begin
@@ -251,14 +251,14 @@ module testbench;
                         $display ("FAIL %s: error mismatch. Expected %s, actual %s",
                             test_id, `PB (err_expected), `PB (err) );
 
-                        $finish;
+                        // $finish;
                     end
                     else if ( ( err_expected === 1'b0 ) && ( res !== res_expected ) )
                     begin
                         $display ("FAIL %s: res mismatch. Expected %s, actual %s",
                             test_id, `PG_BITS (res_expected), `PG_BITS (res) );
 
-                        $finish;
+                        // $finish;
                     end
                 end
             end
