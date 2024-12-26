@@ -35,6 +35,89 @@ module sort_floats_using_fsm (
     //
     // The FLEN parameter is defined in the "import/preprocessed/cvw/config-shared.vh" file
     // and usually equal to the bit width of the double-precision floating-point number, FP64, 64 bits.
+    enum logic [1:0] {
+        STATE_IDLE = 2'b00,
+        STATE_COMP_U0_U1 = 2'b01,
+        STATE_COMP_U1_U2 = 2'b10,
+        STATE_COMP_U0_U2 = 2'b11
+    } state, next_state;
+
+    logic [FLEN-1:0] u0,u1,u2;
+    logic u0_less_or_equal_u1, u1_less_or_equal_u2 ,u0_less_or_equal_u2;
+
+    always_comb
+    begin
+        if (valid_in) begin
+        u0 = unsorted[0];
+        u1 = unsorted[1];
+        u2 = unsorted[2];
+        end
+    end
+
+    // state logic
+    always_comb
+    begin
+        next_state = state;
+
+        case (state)
+        STATE_IDLE : if(valid_in) next_state = STATE_COMP_U0_U1;
+        STATE_COMP_U0_U1: if (!f_le_err) next_state = STATE_COMP_U1_U2;
+        STATE_COMP_U1_U2: if (!f_le_err) next_state = STATE_COMP_U0_U2;
+        STATE_COMP_U0_U2: if (!f_le_err) next_state = STATE_IDLE;
+        endcase
+    end
+
+    always_ff @ (posedge clk)
+        if (rst | f_le_err)
+            state <= STATE_IDLE;
+        else
+            state <= next_state;
+
+    // f_le logic
+    always_comb
+    begin
+        case (state)
+        STATE_IDLE : begin
+            f_le_a = u0;
+            f_le_b = u1;
+            u0_less_or_equal_u1 = f_le_res;
+        end
+        STATE_COMP_U0_U1: begin
+            f_le_a = u1;
+            f_le_b = u2;
+            u1_less_or_equal_u2 = f_le_res;
+        end
+        STATE_COMP_U1_U2: begin
+            f_le_a = u0;
+            f_le_b = u2;
+            u0_less_or_equal_u2 = f_le_res;
+        end
+        endcase
+    end
+
+    // sort logic
+    always_comb
+    if (u0_less_or_equal_u1 & u1_less_or_equal_u2)
+        sorted = unsorted;
+    else if (u0_less_or_equal_u1 & !u1_less_or_equal_u2 & u0_less_or_equal_u2)
+            {   sorted [0],   sorted [1], sorted[2] }
+        = { u0, u2, u1};
+    else if (u0_less_or_equal_u1 & !u1_less_or_equal_u2 & !u0_less_or_equal_u2)
+            {   sorted [0],   sorted [1], sorted[2] }
+        = { u2, u0, u1};
+    else if (!u0_less_or_equal_u1 & u1_less_or_equal_u2 & !u0_less_or_equal_u2)
+            {   sorted [0],   sorted [1], sorted[2] }
+        = { u1, u2, u0};
+    else if (!u0_less_or_equal_u1 & u1_less_or_equal_u2 & u0_less_or_equal_u2)
+            {   sorted [0],   sorted [1], sorted[2] }
+        = { u1, u0, unsorted[2]};
+    else if (!u0_less_or_equal_u1 & !u1_less_or_equal_u2)
+            {   sorted [0],   sorted [1], sorted[2] }
+        = { u2, u1, u0};
+
+    assign valid_out = (state == STATE_COMP_U0_U2) | (f_le_err);
+    assign err = f_le_err;
+    assign bust = (state != STATE_IDLE);
 
 
 
